@@ -1,0 +1,134 @@
+Sub vba_homework()
+
+'Define variables to loop through workbooks
+Dim ws_count As Integer
+Dim w As Integer
+ws_count = ActiveWorkbook.Worksheets.Count
+
+'Set For-loop to apply script to each worksheet
+For w = 1 To ws_count
+
+    'Message box to tell you which worksheet you're processing
+    MsgBox (ActiveWorkbook.Worksheets(w).Name)
+
+
+    'Set variables to process individual worksheets
+    Dim LastRow
+    Dim SummaryLastRow
+    Dim opening_price As Double
+    Dim closing_price As Double
+    Dim summary_ticker As String
+    Dim summary_tally As Integer
+    Dim summary_volume As Double
+    Dim stock_row_counter As Integer
+    Dim ws As Worksheet
+    Dim max As Double
+    Dim min As Double
+    Dim max_vol As Double
+
+        
+    'Set counters
+    Set ws = Sheets(w)
+    LastRow = ws.Cells(Rows.Count, 1).End(xlUp).Row
+    summary_tally = 2
+    summary_volume = 0
+    stock_row_counter = 0
+    
+    'Set headers of summary table
+    ws.Range("J1") = "Ticker"
+    ws.Range("K1") = "Yearly Change"
+    ws.Range("L1") = "Percent Change"
+    ws.Range("M1") = "Total Stock Volume"
+        
+    'For loop to iterate over each row of worksheet
+    For i = 2 To LastRow
+        
+        If ws.Cells(i + 1, 1).Value <> ws.Cells(i, 1).Value Then
+        
+            'Summarize ticker name
+            summary_ticker = ws.Cells(i, 1).Value
+            ws.Cells(summary_tally, 10).Value = summary_ticker
+            
+            'Summarize Yearly Change
+            closing_price = ws.Cells(i, 6).Value
+            opening_price = ws.Cells(i - stock_row_counter, 3).Value
+            ws.Cells(summary_tally, 11).Value = closing_price - opening_price
+                     
+            'Summarize Percent Change
+            If opening_price = closing_price Then
+               ws.Cells(summary_tally, 12).Value = 0
+
+            ElseIf opening_price = 0 Then
+                ws.Cells(summary_tally, 12).Value = 0
+            Else
+                ws.Cells(summary_tally, 12).Value = (closing_price - opening_price) / opening_price
+            End If
+            
+            'Summarize Stock Volume
+            summary_volume = summary_volume + ws.Cells(i, 7).Value
+            ws.Cells(summary_tally, 13).Value = summary_volume
+              
+            'If statement for conditional formating
+            If ws.Cells(summary_tally, 11).Value > 0 Then
+                ws.Cells(summary_tally, 11).Interior.ColorIndex = 4
+            Else
+                ws.Cells(summary_tally, 11).Interior.ColorIndex = 3
+            
+            End If
+
+            summary_tally = summary_tally + 1
+            summary_volume = 0
+            stock_row_counter = 0
+
+        Else
+
+        'Counters to track which row to store summary data
+            summary_volume = summary_volume + ws.Cells(i, 7).Value
+            stock_row_counter = stock_row_counter + 1
+            
+        End If
+        
+        
+    Next i
+    
+    'Set variables for challenge section of homework: summarizing the summary
+    SummaryLastRow = ws.Cells(Rows.Count, 10).End(xlUp).Row
+
+    max = WorksheetFunction.max(ws.Range("L2:L" & SummaryLastRow))
+    min = WorksheetFunction.min(ws.Range("L2:L" & SummaryLastRow))
+    max_vol = WorksheetFunction.max(ws.Range("M2:M" & SummaryLastRow))
+
+    'Formatting/headers
+    ws.Range("P1") = "Ticker"
+    ws.Range("Q1") = "Value"
+    ws.Range("O2") = "Greatest Increase (%)"
+    ws.Range("O3") = "Greatest Decrease (%)"
+    ws.Range("O4") = "Greatest Volume"
+    ws.Cells(2, 17).Style = "Percent"
+    ws.Cells(3, 17).Style = "Percent"
+    
+    'Iterate over summary table
+    For s = 2 To SummaryLastRow
+    
+        If ws.Cells(s, 12).Value = max Then
+            ws.Cells(2, 16).Value = ws.Cells(s, 10).Value
+            ws.Cells(2, 17).Value = max
+        
+        ElseIf ws.Cells(s, 12).Value = min Then
+            ws.Cells(3, 16).Value = ws.Cells(s, 10).Value
+            ws.Cells(3, 17).Value = min
+            
+        ElseIf ws.Cells(s, 13).Value = max_vol Then
+            ws.Cells(4, 16).Value = ws.Cells(s, 10).Value
+            ws.Cells(4, 17).Value = max_vol
+        
+        End If
+        
+    Next s
+    
+Next w
+
+End Sub
+
+
+
